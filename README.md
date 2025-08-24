@@ -1,61 +1,412 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel 12 + Vite + InertiaJS + React + TailwindCSS 4 + Hero UI
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+![Logo](logo_laravel-vite-intertiajs-react-tailwindcss-heroui.svg)
 
-## About Laravel
+## Project Setup
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Create a Laravel Project
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```Shell
+composer create-project laravel/laravel example-app
+cd example-app
+npm install
+npm run build
+composer run dev
+```
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Setup Database
 
-## Learning Laravel
+Create a new MySQL database. Here we have created a new database **called example-app-db**. Now open **.env** file and configure
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```Plain Text
+APP_URL=http://127.0.0.1:8000
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=example-app-db
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Now migrate
 
-## Laravel Sponsors
+```Shell
+php artisan migrate
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Add AI (Optional)
 
-### Premium Partners
+```Shell
+composer require laravel/boost --dev
+php artisan boost:install
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Install InertiaJS
 
-## Contributing
+```Shell
+composer require inertiajs/inertia-laravel
+php artisan inertia:middleware
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+This will create **app/Http/Middleware/HandleInertiaRequests.php**.
 
-## Code of Conduct
+Now, register the middleware in **bootstrap/app.php**:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```PHP
+->withMiddleware(function (Middleware $middleware) {
+    $middleware->web(append: [
+        \App\Http\Middleware\HandleInertiaRequests::class,
+    ]);
+})
+```
 
-## Security Vulnerabilities
+### Install InertiaJS React Dependency
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```Shell
+npm install @inertiajs/react
+```
 
-## License
+### Configure Vite
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Open **resources/js/app.jsx** (for React):
+
+Example for React (**resources/js/app.jsx**):
+
+```JavaScript
+//import './bootstrap';
+
+import { createInertiaApp } from '@inertiajs/react';
+import { createRoot } from 'react-dom/client';
+
+createInertiaApp({
+    resolve: name => {
+        const pages = import.meta.glob('./Pages/**/*.jsx', { eager: true })
+        return pages[`./Pages/${name}.jsx`]
+    },
+    setup({ el, App, props }) {
+        createRoot(el).render(<App {...props} />)
+    },
+});
+```
+
+Install React DOM
+
+```Shell
+npm install react react-dom
+```
+
+Update **vite.config.js:**
+
+```JavaScript
+import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+    plugins: [
+        laravel({
+            input: ['resources/css/app.css', 'resources/js/app.jsx'],
+            refresh: true,
+        }),
+        tailwindcss(),
+        react(),
+    ],
+});
+```
+
+
+Install Vite Plugin for React
+
+```Shell
+npm i @vitejs/plugin-react
+```
+
+Make a page: **resources/js/Pages/Home.jsx**
+
+```JSX
+export default function Home({ user }) {
+    return (
+        <div className="p-6">
+            <h1 className="text-2xl">Welcome, {user} 👋</h1>
+        </div>
+    )
+}
+```
+
+### Create a Laravel Route
+
+In **routes/web.php**:
+
+```PHP
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+
+//Route::get('/', function () {
+//    return view('welcome');
+//});
+
+
+Route::get('/', function () {
+    return Inertia::render('Home', [
+        'user' => "Zunayed Hassan",
+    ]);
+});
+```
+
+
+Open **resources/views/app.blade.php**
+
+```PHP
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        {{-- 👇 Vite preamble is required for React Refresh --}}
+        @viteReactRefresh
+        @vite('resources/js/app.jsx')
+
+        @inertiaHead
+    </head>
+    <body class="antialiased">
+        @inertia
+    </body>
+</html>
+```
+
+### Activate Tailwind CSS
+
+Create a new file **tailwind.config.js**
+
+```JavaScript
+export default {
+    content: [
+        "./resources/views/**/*.blade.php",
+        "./resources/js/**/*.jsx",
+    ],
+    theme: {
+        extend: {},
+    },
+    plugins: [],
+}
+```
+
+Open **app.blade.php** and update it
+
+```PHP
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+  <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+
+      @viteReactRefresh
+      @vite(['resources/css/app.css', 'resources/js/app.jsx'])
+
+      @inertiaHead
+  </head>
+  <body class="antialiased bg-gray-100">
+      @inertia
+  </body>
+</html>
+```
+
+
+### Add Hero UI
+
+Install
+
+```Shell
+npm i @heroui/react framer-motion
+```
+
+At the **resources/css/hero.ts** file
+
+```TypeScript
+// hero.ts
+import { heroui } from "@heroui/react";
+export default heroui();
+```
+
+Open the **resources/css/app.css**
+
+```CSS
+@import 'tailwindcss';
+
+@plugin './hero.ts';
+/* Note: You may need to change the path to fit your project structure */
+@source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+@custom-variant dark (&:is(.dark *));
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+```
+
+#### Provider Setup
+
+Open **resources/js/app.jsx** file
+
+```JSX
+//import './bootstrap';
+
+import { createInertiaApp } from '@inertiajs/react';
+import { createRoot } from 'react-dom/client';
+import {HeroUIProvider} from '@heroui/react'
+import React from 'react'
+
+createInertiaApp({
+    resolve: name => {
+        const pages = import.meta.glob('./Pages/**/*.jsx', { eager: true })
+        return pages[`./Pages/${name}.jsx`]
+    },
+    setup({ el, App, props }) {
+        createRoot(el).render(
+            <React.StrictMode>
+                <HeroUIProvider>
+                    <App {...props} />
+                </HeroUIProvider>
+            </React.StrictMode>
+        )
+    },
+});
+```
+
+At the **resources/js/pages/Home.jsx** file
+
+```JSX
+import {Button} from "@heroui/react";
+
+export default function Home({ user }) {
+    return (
+        <div className="p-6">
+            <h1 className="text-2xl">Welcome, {user} 👋</h1>
+            <Button color="primary">Button</Button>
+        </div>
+    )
+}
+```
+
+
+Open **tailwind.config.js** again
+
+```JavaScript
+// tailwind.config.js
+const { heroui } = require("@heroui/react");
+
+export default {
+    content: [
+        "./resources/views/**/*.blade.php",
+        "./resources/js/**/*.jsx",
+        "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}"
+    ],
+    theme: {
+        extend: {},
+    },
+    darkMode: "class",
+    plugins: [heroui()],
+}
+```
+
+Open resources/js/app.jsx again
+
+```JSX
+// app.tsx or app.jsx
+import './bootstrap';
+
+import { createInertiaApp } from '@inertiajs/react';
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import { createRoot } from 'react-dom/client';
+import {HeroUIProvider} from "@heroui/react";
+
+const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+createInertiaApp({
+    title: (title) => `${title} - ${appName}`,
+    resolve: (name) =>
+        resolvePageComponent(
+            `./Pages/${name}.jsx`,
+            import.meta.glob('./Pages/**/*.jsx'),
+        ),
+    setup({ el, App, props }) {
+        const root = createRoot(el);
+
+        root.render(
+            <HeroUIProvider>
+                <App {...props} />
+            </HeroUIProvider>
+        );
+    },
+    progress: {
+        color: '#4B5563',
+    },
+});
+```
+
+### Add Home Controller
+
+```Shell
+php artisan make:controller HomeController
+```
+
+Open **app/Http/Controllers/HomeController.php**
+
+```PHP
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+class HomeController extends Controller
+{
+    public function index(Request $request)
+    {
+        return Inertia::render('Home', [
+            'user' => "Zunayed Hassan",
+        ]);
+    }
+}
+```
+
+Modify the the route a little bit. Open **routes/web.php**
+
+```PHP
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+
+//Route::get('/', function () {
+//    return view('welcome');
+//});
+
+
+Route::get('/', [HomeController::class, 'index']);
+```
+
+
+Now rebuild and rerun
+
+```Shell
+composer run dev
+```
+
+## Preview
+
+![Preview](preview_laravel_with_heroui_4.png)
+
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in web browser
+
